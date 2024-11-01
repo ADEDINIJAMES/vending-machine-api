@@ -52,7 +52,7 @@ public class SecurityConfig{
                 .authorizeHttpRequests(httpRequest ->
                         httpRequest
                                 .requestMatchers("/api/v1/auth/login",
-                                        "/api/v1/auth/register").permitAll()
+                                        "/api/v1/user").permitAll()
                                 .requestMatchers("/api/v1/auth/logout").authenticated())
                 .logout(logout -> logout
                         .deleteCookies("remove")

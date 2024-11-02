@@ -18,5 +18,7 @@ public interface AuthService extends UserDetailsService {
     ApiResponse<Object> updateUser(UserUpdateRequest request, UUID id);
      ApiResponse<Object> logoutAll (Authentication authentication, HttpServletRequest request) ;
      ApiResponse<Object> deleteUser (UUID id);
+    ApiResponse<Object> getUser(UUID id);
+        ApiResponse<Object> getAllUsers (int pageNumber, int pageSize, String sortBy, String sortDirection);
 
 }

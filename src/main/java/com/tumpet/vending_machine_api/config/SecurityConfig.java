@@ -53,7 +53,7 @@ public class SecurityConfig{
                         httpRequest
                                 .requestMatchers("/api/v1/user/login",
                                         "/api/v1/user").permitAll()
-                                .requestMatchers("/api/v1/user/logout","/api/v1/user/update/{id}","/api/v1/user/delete/{id}").authenticated())
+                                .requestMatchers("/api/v1/user/logout","/api/v1/user/update/{id}","/api/v1/user/delete/{id}","/api/v1/user/{id}","/api/v1/user/all").authenticated())
                 .logout(logout -> logout
                         .deleteCookies("remove")
                         .invalidateHttpSession(true)

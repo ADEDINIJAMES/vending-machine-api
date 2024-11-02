@@ -42,6 +42,22 @@ public class AuthController {
     ApiResponse<Object> response = authService.deleteUser(id);
     return ResponseEntity.status(response.getStatus()).body(response);
 }
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Object>> GetAUser (@PathVariable UUID id) {
+        ApiResponse<Object> response = authService.getUser(id);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<Object>> GetAllUser (
+            @RequestParam(defaultValue = "0", name = "pageNumber") int pageNumber,
+            @RequestParam(defaultValue = "10", name = "pageSize") int pageSize,
+            @RequestParam (defaultValue = "username", name = "sortBy") String sortBy,
+            @RequestParam(defaultValue = "ASC", name = "sortDirection") String sortDirection
+    ) {
+        ApiResponse<Object> response = authService.getAllUsers(pageNumber,pageSize,sortBy,sortDirection);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
 @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logoutAll (Authentication authentication, HttpServletRequest request) {
     ApiResponse<Object> response = authService.logoutAll(authentication,request);

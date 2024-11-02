@@ -15,6 +15,12 @@ import com.tumpet.vending_machine_api.util.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -73,7 +79,7 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .status(201)
                     .message("User registered successfully")
-                    .data(MapUserToUserDto(savedUser))
+                    .data(mapUserToUserDto(savedUser))
                     .timestamp(LocalDateTime.now())
                     .build();
 
@@ -164,7 +170,7 @@ public class AuthServiceImpl implements AuthService {
                         users.get().setLastName(request.getLastName());
                         Users savedUser= userRepository.save(users.get());
 
-                        UserDto userResponse= MapUserToUserDto (savedUser);
+                        UserDto userResponse= mapUserToUserDto (savedUser);
 
                         Map<String, Object> myData = new HashMap<>();
                         myData.put("UserDetails  ", userResponse);
@@ -208,7 +214,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-    private UserDto MapUserToUserDto (Users users){
+    private UserDto mapUserToUserDto (Users users){
         return UserDto.builder()
                 .id(users.getId())
                 .email(users.getEmail())
@@ -226,6 +232,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     public ApiResponse<Object> logoutAll(Authentication authentication, HttpServletRequest request) {
+       try{
         authentication = SecurityContextHolder.getContext().getAuthentication();
 
         log.info("Authentication done");
@@ -254,6 +261,16 @@ public class AuthServiceImpl implements AuthService {
                 .data(null)
                 .timestamp(LocalDateTime.now())
                 .build();
+    }catch (Exception e){
+           e.printStackTrace();
+           log.error(e.getMessage());
+           return ApiResponse.builder()
+                   .message("An Unexpected error occurred !!!")
+                   .status(500)
+                   .data(null)
+                   .timestamp(LocalDateTime.now())
+                   .build();
+       }
     }
 
     public ApiResponse<Object> deleteUser (UUID id){
@@ -293,7 +310,7 @@ public class AuthServiceImpl implements AuthService {
 
         }catch (Exception e){
             e.printStackTrace();
-            log.info("User not authenticated or not found.");
+            log.error(e.getMessage());
             return ApiResponse.builder()
                     .message("AN ERROR OCCURRED")
                     .status(500)
@@ -303,7 +320,91 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public ApiResponse<Object> getAllUsers(int pageNumber, int pageSize, String sortBy, String sortDirection) {
+        try {
+            Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+            Page<Users> usersPage = userRepository.findAll(pageable);
+            Page<UserDto> userDtoPage = usersPage.map(this::mapUserToUserDto);
+            return ApiResponse.builder()
+                    .status(200)
+                    .message("Users fetched successfully")
+                    .data(userDtoPage)
+                    .timestamp(LocalDateTime.now())
+                    .build();
 
 
+        } catch (IllegalArgumentException | NullPointerException | PropertyReferenceException e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ApiResponse.builder()
+                    .message("Invalid request parameters: " + e.getMessage())
+                    .status(400)
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+        } catch (DataAccessException e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ApiResponse.builder()
+                    .message("Database error: " + e.getMessage())
+                    .status(500)
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ApiResponse.builder()
+                    .message("An unexpected error occurred: " + e.getMessage())
+                    .status(500)
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+    }
+@Override
+    public ApiResponse<Object> getUser(UUID id){
+        try{
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String authUsername = userDetails.getUsername();
+        Optional<Users> users= userRepository.findById(id);
+        if(users.isPresent()) {
+            if (users.get().getUsername().equals(authUsername)) {
+                UserDto response = mapUserToUserDto(users.get());
+                return ApiResponse.builder()
+                        .status(200)
+                        .message("User Details Fetched Successfully")
+                        .data(response)
+                        .timestamp(LocalDateTime.now())
+                        .build();
+            }
+            return ApiResponse.builder()
+                    .status(401)
+                    .message("Unauthorized Access")
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+     return    ApiResponse.builder()
+                .message("User not Found ")
+                .status(404)
+                .data(null)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }catch(Exception e){
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ApiResponse.builder()
+                    .status(500)
+                    .message("An Unexpected error occurred")
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+    }
 
 }

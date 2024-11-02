@@ -2,14 +2,21 @@ package com.tumpet.vending_machine_api.serviceImp;
 
 import com.tumpet.vending_machine_api.dto.UserDto;
 import com.tumpet.vending_machine_api.enums.Role;
+import com.tumpet.vending_machine_api.exceptions.ActiveSessionException;
+import com.tumpet.vending_machine_api.exceptions.UserNotFoundException;
 import com.tumpet.vending_machine_api.model.Users;
 import com.tumpet.vending_machine_api.repository.UserRepository;
+import com.tumpet.vending_machine_api.request.LoginRequest;
 import com.tumpet.vending_machine_api.request.UserRequest;
+import com.tumpet.vending_machine_api.request.UserUpdateRequest;
 import com.tumpet.vending_machine_api.responses.ApiResponse;
 import com.tumpet.vending_machine_api.service.AuthService;
 import com.tumpet.vending_machine_api.util.JwtUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +35,8 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
+    private final Map<String, String> activeSessions = new ConcurrentHashMap<>();
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -79,6 +89,125 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public ApiResponse<Object> loginUser(LoginRequest loginRequest) {
+
+        if(loginRequest!=null){
+            String username = loginRequest.getUsername();
+            String rawPassword = loginRequest.getPassword();
+            Optional<Users> users = userRepository.findByUsername(username);
+            if(users.isPresent()){
+                String encodedPassword= users.get().getPassword();
+                if(checkPassword(rawPassword,encodedPassword)){
+                    if (activeSessions.containsKey(username)) {
+                        log.info(activeSessions.get(username));
+                        throw new ActiveSessionException("There is already an active session using your account.");
+
+                    }
+                    activeSessions.remove(username);
+                    String tokenGenerated= jwtUtils.createJwt.apply(users.get());
+                    activeSessions.put(username,tokenGenerated);
+                    Map<String, Object> myData= new HashMap<>();
+                    myData.put("AccessToken",tokenGenerated);
+                    log.info(tokenGenerated);
+                    return ApiResponse.builder()
+                            .message("Login Successful")
+                            .status(200)
+                            .data(myData)
+                            .timestamp(LocalDateTime.now())
+                            .build();
+                }
+                return ApiResponse.builder()
+                        .message("Password or Username incorrect")
+                        .status(403)
+                        .data(null)
+                        .timestamp(LocalDateTime.now())
+                        .build();
+
+            }
+            return ApiResponse.builder()
+                    .message("User not found")
+                    .status(404)
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+
+        return ApiResponse.builder()
+                .message("Login Details needed")
+                .status(403)
+                .data(null)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Override
+    public ApiResponse<Object> updateUser(UserUpdateRequest request, UUID id) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+                log.info("User authenticated successfully...");
+                Optional<Users> dbUser = userRepository.findByUsername(userDetails.getUsername());
+                Optional<Users> users = userRepository.findById(id);
+                if (dbUser.isPresent()) {
+                    if(users.isPresent() && Objects.equals(dbUser.get().getUsername(), users.get().getUsername())) {
+                        if(request==null){
+                            return ApiResponse.builder()
+                                    .message("Please enter the correct details")
+                                    .data(null)
+                                    .status(401)
+                                    .timestamp(LocalDateTime.now())
+                                    .build();
+                        }
+                        users.get().setFirstName(request.getFirstName());
+                        users.get().setEmail(request.getEmail());
+                        users.get().setLastName(request.getLastName());
+                        Users savedUser= userRepository.save(users.get());
+
+                        UserDto userResponse= MapUserToUserDto (savedUser);
+
+                        Map<String, Object> myData = new HashMap<>();
+                        myData.put("UserDetails  ", userResponse);
+                        return ApiResponse.builder()
+                                .message("User details updated successfully")
+                                .data(myData)
+                                .status(200)
+                                .timestamp(LocalDateTime.now())
+                                .build();
+                    }
+
+                    throw new UserNotFoundException("USER NOT FOUND");
+
+                }
+                log.info("PERMISSION NOT GRANTED");
+                return ApiResponse.builder()
+                        .message("You are not permitted !!")
+                        .status(401)
+                        .timestamp(LocalDateTime.now())
+                        .data(null)
+                        .build();
+
+            }
+            log.info("User not authenticated or not found.");
+            return ApiResponse.builder()
+                    .message("User Not logged in or not found")
+                    .status(401)
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }catch (Exception e){
+            e.printStackTrace();
+            return ApiResponse.builder()
+                    .message("An Error occurred")
+                    .status(500)
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+
+    }
+
+
     private UserDto MapUserToUserDto (Users users){
         return UserDto.builder()
                 .id(users.getId())
@@ -86,9 +215,95 @@ public class AuthServiceImpl implements AuthService {
                 .firstName(users.getFirstName())
                 .username(users.getUsername())
                 .balance(users.getBalance())
+                .role(users.getRole())
                 .lastName(users.getLastName())
                 .build();
 
     }
+
+    private boolean checkPassword (String rawPassword, String dBPassword ){
+        return passwordEncoder.matches(rawPassword,dBPassword);
+    }
+
+    public ApiResponse<Object> logoutAll(Authentication authentication, HttpServletRequest request) {
+        authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        log.info("Authentication done");
+
+        if (authentication != null) {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String username = userDetails.getUsername();
+
+            SecurityContextHolder.clearContext();
+            request.getSession().invalidate();
+
+            activeSessions.remove(username);
+
+            return ApiResponse.builder()
+                    .message("Logout Successful")
+                    .status(200)
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+
+        // Return error response if the user is not authenticated
+        return ApiResponse.builder()
+                .message("User not logged in")
+                .status(403)
+                .data(null)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    public ApiResponse<Object> deleteUser (UUID id){
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+                log.info("User authenticated successfully...");
+                Optional<Users> dbUser = userRepository.findByUsername(userDetails.getUsername());
+
+                if (dbUser.isPresent() && dbUser.get().getRole() == Role.ADMIN) {
+                    Optional<Users> users = userRepository.findById(id);
+                    users.ifPresent(userRepository::delete);
+                    log.info("user {} deleted successful", users.get().getId());
+                    return ApiResponse.builder()
+                            .message("Deletion successful")
+                            .status(200)
+                            .data(null)
+                            .timestamp(LocalDateTime.now())
+                            .build();
+                }
+                log.info("PERMISSION NOT GRANTED");
+                return ApiResponse.builder()
+                        .message("You are not permitted !!")
+                        .status(401)
+                        .data(null)
+                        .timestamp(LocalDateTime.now())
+                        .build();
+
+            }
+            log.info("User not authenticated or not found.");
+            return ApiResponse.builder()
+                    .message("User Not logged in or not found")
+                    .status(401)
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+        }catch (Exception e){
+            e.printStackTrace();
+            log.info("User not authenticated or not found.");
+            return ApiResponse.builder()
+                    .message("AN ERROR OCCURRED")
+                    .status(500)
+                    .data(null)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+    }
+
+
+
 
 }

@@ -51,9 +51,9 @@ public class SecurityConfig{
 
                 .authorizeHttpRequests(httpRequest ->
                         httpRequest
-                                .requestMatchers("/api/v1/auth/login",
+                                .requestMatchers("/api/v1/user/login",
                                         "/api/v1/user").permitAll()
-                                .requestMatchers("/api/v1/auth/logout").authenticated())
+                                .requestMatchers("/api/v1/user/logout","/api/v1/user/update/{id}","/api/v1/user/delete/{id}").authenticated())
                 .logout(logout -> logout
                         .deleteCookies("remove")
                         .invalidateHttpSession(true)

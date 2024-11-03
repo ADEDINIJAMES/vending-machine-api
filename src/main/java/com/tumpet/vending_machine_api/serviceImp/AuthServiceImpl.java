@@ -141,7 +141,7 @@ public class AuthServiceImpl implements AuthService {
 
         return ApiResponse.builder()
                 .message("Login Details needed")
-                .status(403)
+                .status(401)
                 .data(null)
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -188,7 +188,7 @@ public class AuthServiceImpl implements AuthService {
                 log.info("PERMISSION NOT GRANTED");
                 return ApiResponse.builder()
                         .message("You are not permitted !!")
-                        .status(401)
+                        .status(403)
                         .timestamp(LocalDateTime.now())
                         .data(null)
                         .build();

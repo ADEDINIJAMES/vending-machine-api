@@ -1,5 +1,6 @@
 package com.tumpet.vending_machine_api.config;
 
+import com.tumpet.vending_machine_api.enums.Role;
 import com.tumpet.vending_machine_api.service.AuthService;
 import com.tumpet.vending_machine_api.util.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +54,7 @@ public class SecurityConfig{
                         httpRequest
                                 .requestMatchers("/api/v1/user/login",
                                         "/api/v1/user").permitAll()
-                                .requestMatchers("/api/v1/user/logout","/api/v1/user/update/{id}","/api/v1/user/delete/{id}","/api/v1/user/{id}","/api/v1/user/all").authenticated())
+                                .requestMatchers("/api/v1/user/logout","/api/v1/user/update/{id}","/api/v1/user/delete/{id}","/api/v1/user/{id}","/api/v1/user/all","/api/v1/product/**").authenticated())
                 .logout(logout -> logout
                         .deleteCookies("remove")
                         .invalidateHttpSession(true)

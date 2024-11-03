@@ -1,24 +1,17 @@
-package com.tumpet.vending_machine_api.model;
+package com.tumpet.vending_machine_api.request;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
-
-@Entity
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class Product {
-    @Id
-    private UUID id = UUID.randomUUID();
-
+public class ProductRequest {
     @NotBlank(message = "Product name is required")
     private String name;
 
@@ -30,8 +23,9 @@ public class Product {
     @Min(value = 0, message = "Quantity cannot be negative")
     private Integer quantity;
 
-    @NotNull(message = "Seller ID is required")
-    private UUID sellerId;
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public void setPrice(Integer price) {
         if (price == null || price < 50 || price % 50 != 0) {
@@ -39,4 +33,12 @@ public class Product {
         }
         this.price = price;
     }
+
+    public void setQuantity(Integer quantity) {
+        if (quantity==0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+        this.quantity = quantity;
+    }
+
 }

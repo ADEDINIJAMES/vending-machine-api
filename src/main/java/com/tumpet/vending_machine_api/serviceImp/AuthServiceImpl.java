@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
     private final Map<String, String> activeSessions = new ConcurrentHashMap<>();
+    private static final List<Integer> ALLOWED_DENOMINATION = Arrays.asList(50,100,200,500,1000);
 
 
     @Override
@@ -365,7 +367,33 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
     }
-@Override
+
+    @Override
+    public ApiResponse<Object> depositFund(int amount, Users users) {
+if(ALLOWED_DENOMINATION.contains(amount)){
+    BigDecimal oldBalance = users.getBalance();
+    BigDecimal newBalance = users.getBalance().add(BigDecimal.valueOf(amount));
+    users.setBalance(newBalance);
+ Users newBalanceUser=  userRepository.save(users);
+    return ApiResponse.builder()
+            .status(200)
+            .message("User balance updated from "+oldBalance+ " to "+newBalance)
+            .data(mapUserToUserDto(newBalanceUser))
+            .timestamp(LocalDateTime.now())
+            .build();
+
+}
+
+        return ApiResponse.builder()
+                .status(400)
+                .message("You can only deposit 50,100,500,1000 denominations ")
+                .data(null)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+
+    @Override
     public ApiResponse<Object> getUser(UUID id){
         try{
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -406,5 +434,6 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
     }
+
 
 }

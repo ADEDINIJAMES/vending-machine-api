@@ -1,6 +1,7 @@
 package com.tumpet.vending_machine_api.controller;
 
 import com.tumpet.vending_machine_api.enums.Role;
+import com.tumpet.vending_machine_api.model.Users;
 import com.tumpet.vending_machine_api.request.LoginRequest;
 import com.tumpet.vending_machine_api.request.UserRequest;
 import com.tumpet.vending_machine_api.request.UserUpdateRequest;
@@ -10,7 +11,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -62,6 +65,12 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> logoutAll (Authentication authentication, HttpServletRequest request) {
     ApiResponse<Object> response = authService.logoutAll(authentication,request);
     return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PostMapping("/deposit")
+    public ResponseEntity<ApiResponse<Object>> deposit (@RequestParam (name = "amount") int amount, @AuthenticationPrincipal Users users) {
+        ApiResponse<Object> response = authService.depositFund(amount,users);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
 }

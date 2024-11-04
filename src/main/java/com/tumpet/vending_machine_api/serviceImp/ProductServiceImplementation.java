@@ -226,7 +226,7 @@ public class ProductServiceImplementation implements ProductService {
         }
     }
 
-    private ProductDto mapToProductDto (Product product){
+    public ProductDto mapToProductDto (Product product){
         return ProductDto .builder()
                 .id(product.getId())
                 .name(product.getName())

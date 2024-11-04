@@ -43,7 +43,7 @@ public class Users implements UserDetails {
     @Email(message = "Email should be valid")
     private String email;
     @NotNull(message = "Balance is required")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Balance cannot be negative")
+    @DecimalMin(value = "0", inclusive = true, message = "Balance cannot be negative")
     private BigDecimal balance = BigDecimal.ZERO;
 
     @NotNull(message = "Role is required")

@@ -392,6 +392,29 @@ if(ALLOWED_DENOMINATION.contains(amount)){
                 .build();
     }
 
+    @Override
+    public ApiResponse<Object> resetBalance(Users users) {
+        try{
+        BigDecimal oldBalance = users.getBalance();
+        users.setBalance(BigDecimal.ZERO);
+        Users updatedUser= userRepository.save(users);
+        return ApiResponse.builder()
+                .status(200)
+                .message("Balance reset successful. OldBalance "+ oldBalance +". Balance now "+ updatedUser.getBalance())
+                .data(mapUserToUserDto(updatedUser))
+                .timestamp(LocalDateTime.now())
+                .build();
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ApiResponse.builder()
+                    .status(500)
+                    .message("An Error occurred !!")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+    }
+
 
     @Override
     public ApiResponse<Object> getUser(UUID id){

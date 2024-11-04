@@ -73,4 +73,9 @@ public class AuthController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    @PostMapping("/reset")
+    public ResponseEntity<ApiResponse<Object>> resetDeposit (@AuthenticationPrincipal Users users) {
+        ApiResponse<Object> response = authService.resetBalance(users);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
 }

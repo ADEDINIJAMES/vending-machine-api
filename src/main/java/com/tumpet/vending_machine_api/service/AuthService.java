@@ -22,5 +22,5 @@ public interface AuthService extends UserDetailsService {
     ApiResponse<Object> getUser(UUID id);
     ApiResponse<Object> getAllUsers (int pageNumber, int pageSize, String sortBy, String sortDirection);
     ApiResponse<Object> depositFund (int amount, Users users);
-
+    ApiResponse<Object> resetBalance (Users users);
 }

@@ -10,7 +10,7 @@ import com.tumpet.vending_machine_api.request.LoginRequest;
 import com.tumpet.vending_machine_api.request.UserRequest;
 import com.tumpet.vending_machine_api.request.UserUpdateRequest;
 import com.tumpet.vending_machine_api.responses.ApiResponse;
-import com.tumpet.vending_machine_api.service.AuthService;
+import com.tumpet.vending_machine_api.service.UserService;
 import com.tumpet.vending_machine_api.util.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,12 +37,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthServiceImpl implements AuthService {
+public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
     private final Map<String, String> activeSessions = new ConcurrentHashMap<>();
     private static final List<Integer> ALLOWED_DENOMINATION = Arrays.asList(50,100,200,500,1000);
+    private static final String DENOMINATION_ERROR = "You can only deposit 50, 100, 200, 500, or 1,000 denominations.";
 
 
     @Override
@@ -60,7 +60,6 @@ public class AuthServiceImpl implements AuthService {
                 return ApiResponse.builder()
                         .status(401)
                         .message("username or email already registered")
-                        .data(null)
                         .timestamp(LocalDateTime.now())
                         .build();
             }
@@ -91,7 +90,6 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .status(500)
                     .message("An Error Occurred !!")
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         }
@@ -128,7 +126,6 @@ public class AuthServiceImpl implements AuthService {
                 return ApiResponse.builder()
                         .message("Password or Username incorrect")
                         .status(403)
-                        .data(null)
                         .timestamp(LocalDateTime.now())
                         .build();
 
@@ -136,7 +133,6 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .message("User not found")
                     .status(404)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         }
@@ -144,7 +140,6 @@ public class AuthServiceImpl implements AuthService {
         return ApiResponse.builder()
                 .message("Login Details needed")
                 .status(401)
-                .data(null)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
@@ -162,7 +157,6 @@ public class AuthServiceImpl implements AuthService {
                         if(request==null){
                             return ApiResponse.builder()
                                     .message("Please enter the correct details")
-                                    .data(null)
                                     .status(401)
                                     .timestamp(LocalDateTime.now())
                                     .build();
@@ -192,7 +186,6 @@ public class AuthServiceImpl implements AuthService {
                         .message("You are not permitted !!")
                         .status(403)
                         .timestamp(LocalDateTime.now())
-                        .data(null)
                         .build();
 
             }
@@ -200,7 +193,6 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .message("User Not logged in or not found")
                     .status(401)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         }catch (Exception e){
@@ -208,7 +200,6 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .message("An Error occurred")
                     .status(500)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         }
@@ -216,7 +207,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-    private UserDto mapUserToUserDto (Users users){
+    public UserDto mapUserToUserDto (Users users){
         return UserDto.builder()
                 .id(users.getId())
                 .email(users.getEmail())
@@ -251,16 +242,13 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .message("Logout Successful")
                     .status(200)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         }
 
-        // Return error response if the user is not authenticated
         return ApiResponse.builder()
                 .message("User not logged in")
                 .status(403)
-                .data(null)
                 .timestamp(LocalDateTime.now())
                 .build();
     }catch (Exception e){
@@ -269,7 +257,6 @@ public class AuthServiceImpl implements AuthService {
            return ApiResponse.builder()
                    .message("An Unexpected error occurred !!!")
                    .status(500)
-                   .data(null)
                    .timestamp(LocalDateTime.now())
                    .build();
        }
@@ -289,7 +276,6 @@ public class AuthServiceImpl implements AuthService {
                     return ApiResponse.builder()
                             .message("Deletion successful")
                             .status(200)
-                            .data(null)
                             .timestamp(LocalDateTime.now())
                             .build();
                 }
@@ -297,7 +283,6 @@ public class AuthServiceImpl implements AuthService {
                 return ApiResponse.builder()
                         .message("You are not permitted !!")
                         .status(401)
-                        .data(null)
                         .timestamp(LocalDateTime.now())
                         .build();
 
@@ -306,7 +291,6 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .message("User Not logged in or not found")
                     .status(401)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
 
@@ -316,7 +300,6 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .message("AN ERROR OCCURRED")
                     .status(500)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         }
@@ -343,7 +326,6 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .message("Invalid request parameters: " + e.getMessage())
                     .status(400)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
 
@@ -353,7 +335,6 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .message("Database error: " + e.getMessage())
                     .status(500)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         } catch (Exception e) {
@@ -362,32 +343,47 @@ public class AuthServiceImpl implements AuthService {
             return ApiResponse.builder()
                     .message("An unexpected error occurred: " + e.getMessage())
                     .status(500)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         }
     }
 
     @Override
+    @Transactional
     public ApiResponse<Object> depositFund(int amount, Users users) {
-if(ALLOWED_DENOMINATION.contains(amount)){
-    BigDecimal oldBalance = users.getBalance();
-    BigDecimal newBalance = users.getBalance().add(BigDecimal.valueOf(amount));
-    users.setBalance(newBalance);
- Users newBalanceUser=  userRepository.save(users);
-    return ApiResponse.builder()
-            .status(200)
-            .message("User balance updated from "+oldBalance+ " to "+newBalance)
-            .data(mapUserToUserDto(newBalanceUser))
-            .timestamp(LocalDateTime.now())
-            .build();
+        if(users==null){
+        return  ApiResponse
+                .builder()
+                .status(403)
+                .message("Usre not present")
+                .timestamp(LocalDateTime.now())
+                .build();
+        }
+        if (!users.getRole().equals(Role.BUYER)) {
+            return ApiResponse.builder()
+                    .status(403)
+                    .message("Only users with 'buyer' role can deposit funds.")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+        if (ALLOWED_DENOMINATION.contains(amount)) {
+            BigDecimal oldBalance = users.getBalance();
+            BigDecimal newBalance = oldBalance.add(BigDecimal.valueOf(amount));
+            users.setBalance(newBalance);
+            Users updatedUser = userRepository.save(users);
 
-}
+            return ApiResponse.builder()
+                    .status(200)
+                    .message("User balance updated from " + oldBalance + " to " + newBalance)
+                    .data(mapUserToUserDto(updatedUser))
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
 
+        // Invalid denomination response
         return ApiResponse.builder()
                 .status(400)
-                .message("You can only deposit 50,100,500,1000 denominations ")
-                .data(null)
+                .message(DENOMINATION_ERROR)
                 .timestamp(LocalDateTime.now())
                 .build();
     }

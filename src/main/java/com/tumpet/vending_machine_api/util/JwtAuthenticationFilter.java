@@ -1,7 +1,6 @@
 package com.tumpet.vending_machine_api.util;
 
-import com.tumpet.vending_machine_api.service.AuthService;
-import com.tumpet.vending_machine_api.util.JwtUtils;
+import com.tumpet.vending_machine_api.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,12 +19,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@Profile("!test") // Disable for tests
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtils utils;
-    private final AuthService authService;
+    private final UserService authService;
 
     @Autowired
-    public JwtAuthenticationFilter(JwtUtils utils, @Lazy AuthService authService) {
+    public JwtAuthenticationFilter(JwtUtils utils, @Lazy UserService authService) {
         this.utils = utils;
         this.authService = authService;
     }

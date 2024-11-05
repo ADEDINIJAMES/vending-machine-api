@@ -99,7 +99,6 @@ public class ProductServiceImplementation implements ProductService {
             return ApiResponse.builder()
                     .message("Invalid request parameters: " + e.getMessage())
                     .status(400)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
 
@@ -109,7 +108,6 @@ public class ProductServiceImplementation implements ProductService {
             return ApiResponse.builder()
                     .message("Database error: " + e.getMessage())
                     .status(500)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         } catch (Exception e) {
@@ -118,7 +116,6 @@ public class ProductServiceImplementation implements ProductService {
             return ApiResponse.builder()
                     .message("An unexpected error occurred: " + e.getMessage())
                     .status(500)
-                    .data(null)
                     .timestamp(LocalDateTime.now())
                     .build();
         }
@@ -195,7 +192,6 @@ public class ProductServiceImplementation implements ProductService {
                 return ApiResponse.builder()
                         .status(200)
                         .message("Product Deleted Successfully !!")
-                        .data(null)
                         .timestamp(LocalDateTime.now())
                         .build();
             }
@@ -210,7 +206,6 @@ public class ProductServiceImplementation implements ProductService {
         return ApiResponse.builder()
                 .status(404)
                 .message("no Product found")
-                .data(null)
                 .timestamp(LocalDateTime.now())
                 .build();
 

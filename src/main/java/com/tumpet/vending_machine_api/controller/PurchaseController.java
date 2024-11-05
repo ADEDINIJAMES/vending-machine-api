@@ -1,5 +1,6 @@
 package com.tumpet.vending_machine_api.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.tumpet.vending_machine_api.exceptions.ProductNotFoundException;
 import com.tumpet.vending_machine_api.model.Users;
 import com.tumpet.vending_machine_api.responses.ApiResponse;
@@ -25,7 +26,7 @@ public class PurchaseController {
     public ResponseEntity<ApiResponse<Object>> buyProduct (
             @RequestParam(name = "productId") UUID productId,
             @RequestParam(name="quantity") int quantity,
-            @AuthenticationPrincipal Users user ) throws ProductNotFoundException {
+            @AuthenticationPrincipal Users user ) throws ProductNotFoundException, JsonProcessingException {
         ApiResponse<Object> response = purchaseService.buyProduct(productId,quantity,user);
         return ResponseEntity.status(response.getStatus()).body(response);
     }

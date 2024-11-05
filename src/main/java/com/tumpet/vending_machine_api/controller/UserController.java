@@ -6,12 +6,11 @@ import com.tumpet.vending_machine_api.request.LoginRequest;
 import com.tumpet.vending_machine_api.request.UserRequest;
 import com.tumpet.vending_machine_api.request.UserUpdateRequest;
 import com.tumpet.vending_machine_api.responses.ApiResponse;
-import com.tumpet.vending_machine_api.service.AuthService;
+import com.tumpet.vending_machine_api.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +20,8 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
-public class AuthController {
-    private final AuthService authService;
+public class UserController {
+    private final UserService authService;
 @PostMapping
     public ResponseEntity<ApiResponse<Object>> RegisterUser (@Valid @RequestBody UserRequest request,
     @RequestParam( required=true, name="role") Role role
@@ -61,7 +60,7 @@ public class AuthController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-@PostMapping("/logout")
+@PostMapping("/logout/all")
     public ResponseEntity<ApiResponse<Object>> logoutAll (Authentication authentication, HttpServletRequest request) {
     ApiResponse<Object> response = authService.logoutAll(authentication,request);
     return ResponseEntity.status(response.getStatus()).body(response);

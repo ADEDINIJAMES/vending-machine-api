@@ -19,17 +19,28 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(ActiveSessionException.class)
-    public ResponseEntity<String> handleFlightNotFoundException(ActiveSessionException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    public ResponseEntity<Object> handleActiveSessionException(ActiveSessionException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "status", HttpStatus.CONFLICT.value(),
+                "message", ex.getMessage(),
+                "timestamp", Instant.now()
+        ));
     }
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<String> handleFlightNotFoundException(UserNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-    }
+    public ResponseEntity<Object> userNotFoundException(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "status", HttpStatus.NOT_FOUND.value(),
+                "message", ex.getMessage(),
+                "timestamp", Instant.now()
+        ));    }
 
     @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<String> handleProductNotFoundException(ProductNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    public ResponseEntity<Object> handleProductNotFoundException(ProductNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "status", HttpStatus.NOT_FOUND.value(),
+                "message", ex.getMessage(),
+                "timestamp", Instant.now()
+        ));
     }
 
 
@@ -61,7 +72,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleGeneralException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "message", ex.getMessage().substring(11),
+                "message", ex.getMessage(),
                 "timestamp", Instant.now()
         ));
     }

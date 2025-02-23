@@ -51,11 +51,11 @@ public class SecurityConfig{
 
                 .authorizeHttpRequests(httpRequest ->
                         httpRequest
-                        .requestMatchers("/api/v1/user/deposit","/api/v1/purchase").hasAuthority(String.valueOf(Role.BUYER))
+                        .requestMatchers("/api/v1/purchase", "/api/v1/user/deposit").hasAuthority(String.valueOf(Role.BUYER))
 
                                 .requestMatchers("/api/v1/user/login",
                                         "/api/v1/user").permitAll()
-                                .requestMatchers("/api/v1/user/logout","/api/v1/user/update/{id}","/api/v1/user/delete/{id}","/api/v1/user/{id}","/api/v1/user/all","/api/v1/product/**","/api/v1/user/deposit").authenticated())
+                                .requestMatchers("/api/v1/user/logout","/api/v1/user/update/{id}","/api/v1/user/delete/{id}","/api/v1/user/{id}","/api/v1/user/all","/api/v1/product/**","/api/v1/user/deposit", "/api/v1/user/balance-reset/{id}").authenticated())
                 .logout(logout -> logout
                         .deleteCookies("remove")
                         .invalidateHttpSession(true)

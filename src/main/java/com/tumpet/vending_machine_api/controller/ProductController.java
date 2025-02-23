@@ -9,6 +9,7 @@ import com.tumpet.vending_machine_api.responses.ApiResponse;
 import com.tumpet.vending_machine_api.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +20,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/product")
 public class ProductController {
+    @Autowired
 
     private final ProductService productService;
-    @PostMapping("/")
+    @PostMapping
 @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse<Object>> createProduct (@Valid @RequestBody ProductRequest request) throws UserNotFoundException {
         ApiResponse<Object> response = productService.createProduct(request);

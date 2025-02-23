@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleActiveSessionException(ActiveSessionException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
                 "status", HttpStatus.CONFLICT.value(),
-                "message", ex.getMessage(),
+                "message", "Someone already login with your credentials",
                 "timestamp", Instant.now()
         ));
     }
@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> userNotFoundException(UserNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                 "status", HttpStatus.NOT_FOUND.value(),
-                "message", ex.getMessage(),
+                "message", "User not found",
                 "timestamp", Instant.now()
         ));    }
 
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleProductNotFoundException(ProductNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                 "status", HttpStatus.NOT_FOUND.value(),
-                "message", ex.getMessage(),
+                "message", "Product requested not found",
                 "timestamp", Instant.now()
         ));
     }
@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "message", ex.getMessage(),
+                "message", "Request contains error, hence cannot be processed !!",
                 "timestamp", Instant.now()
         ));
     }
@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleGeneralException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "message", ex.getMessage(),
+                "message", "An error occurred in the Process",
                 "timestamp", Instant.now()
         ));
     }

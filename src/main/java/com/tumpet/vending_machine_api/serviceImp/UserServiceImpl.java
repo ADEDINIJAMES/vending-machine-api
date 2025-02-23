@@ -97,7 +97,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse<Object> loginUser(LoginRequest loginRequest) {
-
         if(loginRequest!=null){
             String username = loginRequest.getUsername();
             String rawPassword = loginRequest.getPassword();
@@ -106,12 +105,16 @@ public class UserServiceImpl implements UserService {
                 String encodedPassword= users.get().getPassword();
                 if(checkPassword(rawPassword,encodedPassword)){
                     if (activeSessions.containsKey(username)) {
+                        if(jwtUtils.isTokenExpired.apply(activeSessions.get(username))){
+                            activeSessions.remove(username);
+                        }
                         log.info(activeSessions.get(username));
                         throw new ActiveSessionException("There is already an active session using your account.");
 
                     }
-                    activeSessions.remove(username);
-                    String tokenGenerated= jwtUtils.createJwt.apply(users.get());
+//                    activeSessions.remove(username);
+//                    String tokenGenerated= jwtUtils.createJwt.apply(users.get());
+                    String tokenGenerated = jwtUtils.jwtCreate(users.get());
                     activeSessions.put(username,tokenGenerated);
                     Map<String, Object> myData= new HashMap<>();
                     myData.put("AccessToken",tokenGenerated);
@@ -144,9 +147,101 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+//    public ApiResponse<Object> updateUser(UserUpdateRequest request, UUID id) throws UserNotFoundException {
+//        try {
+//            // Validate the request
+//            if (request == null) {
+//                return ApiResponse.builder()
+//                        .message("Please enter the correct details")
+//                        .status(401)
+//                        .timestamp(LocalDateTime.now())
+//                        .build();
+//            }
+//
+//            // Check if the user is authenticated
+//            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//            if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
+//                log.info("User not authenticated or not found.");
+//                return ApiResponse.builder()
+//                        .message("User Not logged in or not found")
+//                        .status(401)
+//                        .timestamp(LocalDateTime.now())
+//                        .build();
+//            }
+//
+//            // Get the authenticated user's details
+//            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+//            log.info("User authenticated successfully...");
+//
+//            // Fetch the authenticated user from the database
+//            Optional<Users> dbUser = userRepository.findByUsername(userDetails.getUsername());
+//            if (dbUser.isEmpty()) {
+//                log.info("PERMISSION NOT GRANTED");
+//                return ApiResponse.builder()
+//                        .message("You are not permitted !!")
+//                        .status(403)
+//                        .timestamp(LocalDateTime.now())
+//                        .build();
+//            }
+//
+//            // Fetch the user to be updated
+//            Optional<Users> users = userRepository.findById(id);
+//            if (users.isEmpty()) {
+//                throw new UserNotFoundException("USER NOT FOUND");
+//            }
+//
+//            // Check if the authenticated user is authorized to update the target user
+//            if (!Objects.equals(dbUser.get().getUsername(), users.get().getUsername())) {
+//                log.info("PERMISSION NOT GRANTED");
+//                return ApiResponse.builder()
+//                        .message("You are not permitted !!")
+//                        .status(403)
+//                        .timestamp(LocalDateTime.now())
+//                        .build();
+//            }
+//
+//            // Update the user details
+//            Users userToUpdate = users.get();
+//            userToUpdate.setFirstName(request.getFirstName());
+//            userToUpdate.setEmail(request.getEmail());
+//            userToUpdate.setLastName(request.getLastName());
+//            Users savedUser = userRepository.save(userToUpdate);
+//
+//            // Map the updated user to a DTO
+//            UserDto userResponse = mapUserToUserDto(savedUser);
+//
+//            // Prepare the response
+//            Map<String, Object> myData = new HashMap<>();
+//            myData.put("UserDetails", userResponse);
+//            return ApiResponse.builder()
+//                    .message("User details updated successfully")
+//                    .data(myData)
+//                    .status(200)
+//                    .timestamp(LocalDateTime.now())
+//                    .build();
+//
+//        } catch (UserNotFoundException e) {
+//            log.error("User not found: {}", e.getMessage());
+//            throw e; // Re-throw the exception to be handled by the global exception handler
+//        } catch (Exception e) {
+//            log.error("An error occurred: {}", e.getMessage(), e);
+//            return ApiResponse.builder()
+//                    .message("An Error occurred")
+//                    .status(500)
+//                    .timestamp(LocalDateTime.now())
+//                    .build();
+//        }
+//    }
+
     @Override
     public ApiResponse<Object> updateUser(UserUpdateRequest request, UUID id) {
-        try {
+        try { if(request==null){
+            return ApiResponse.builder()
+                    .message("Please enter the correct details")
+                    .status(401)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
                 log.info("User authenticated successfully...");
@@ -154,13 +249,7 @@ public class UserServiceImpl implements UserService {
                 Optional<Users> users = userRepository.findById(id);
                 if (dbUser.isPresent()) {
                     if(users.isPresent() && Objects.equals(dbUser.get().getUsername(), users.get().getUsername())) {
-                        if(request==null){
-                            return ApiResponse.builder()
-                                    .message("Please enter the correct details")
-                                    .status(401)
-                                    .timestamp(LocalDateTime.now())
-                                    .build();
-                        }
+
                         users.get().setFirstName(request.getFirstName());
                         users.get().setEmail(request.getEmail());
                         users.get().setLastName(request.getLastName());
@@ -355,7 +444,7 @@ public class UserServiceImpl implements UserService {
         return  ApiResponse
                 .builder()
                 .status(403)
-                .message("Usre not present")
+                .message("User not present")
                 .timestamp(LocalDateTime.now())
                 .build();
         }
@@ -409,8 +498,31 @@ public class UserServiceImpl implements UserService {
                     .timestamp(LocalDateTime.now())
                     .build();
         }
+
+
     }
 
+    public String resetBalances (Users user, int amount, UUID userId ){
+        try{
+            if(user.getRole().equals(Role.ADMIN)|| user.getId().equals(userId)){
+                Users users = userRepository.findById(userId).orElseThrow(()-> new UserNotFoundException("User not found"));
+                BigDecimal oldUserBalance= users.getBalance();
+                BigDecimal newBalance = oldUserBalance.add(BigDecimal.valueOf(amount));
+                users.setBalance(newBalance);
+                Users savedUsers= userRepository.save(users);
+                return "User's balance now reset from "+ oldUserBalance +" to "+ savedUsers.getBalance();
+            }
+            return "You are not permitted to do this ";
+
+        } catch (UserNotFoundException e) {
+            e.printStackTrace();
+            return e.getMessage();
+
+        }catch (Exception e) {
+return "An Error occurred";
+        }
+
+    }
 
     @Override
     public ApiResponse<Object> getUser(UUID id){

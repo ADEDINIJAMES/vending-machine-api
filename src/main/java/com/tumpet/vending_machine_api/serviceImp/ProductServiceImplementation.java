@@ -14,6 +14,7 @@ import com.tumpet.vending_machine_api.responses.ApiResponse;
 import com.tumpet.vending_machine_api.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.*;
 import org.springframework.data.mapping.PropertyReferenceException;
@@ -23,14 +24,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ProductServiceImplementation implements ProductService {
+    @Autowired
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     @Override

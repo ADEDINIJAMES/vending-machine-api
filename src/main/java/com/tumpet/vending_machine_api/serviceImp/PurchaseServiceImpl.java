@@ -41,6 +41,15 @@ public class PurchaseServiceImpl implements PurchaseService {
 
     @Override
     public ApiResponse<Object> buyProduct(UUID productId, int quantity, Users user) throws ProductNotFoundException, JsonProcessingException {
+       // Validate product request quantity
+        if (quantity <= 0) {
+            return ApiResponse.builder()
+                    .status(400)
+                    .message("Enter a valid quantity")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+
         // Find the product
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product Not Found"));
@@ -49,13 +58,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         BigDecimal totalPrice = BigDecimal.valueOf(product.getPrice())
                 .multiply(BigDecimal.valueOf(quantity));
 
-        if (quantity <= 0) {
-            return ApiResponse.builder()
-                    .status(400)
-                    .message("Enter a valid quantity")
-                    .timestamp(LocalDateTime.now())
-                    .build();
-        }
+
 
         if (product.getQuantity() < quantity) {
             return ApiResponse.builder()

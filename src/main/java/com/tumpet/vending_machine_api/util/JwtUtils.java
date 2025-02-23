@@ -49,6 +49,17 @@ public class JwtUtils {
                 .compact();
     };
 
+    public String jwtCreate (UserDetails userDetails){
+        Map<String, Object> claims = new HashMap<>();
+        return Jwts.builder()
+                .signWith(getKey.get())
+                .claims(claims)
+                .subject(userDetails.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(expirationTime.get())
+                .compact();
+    }
+
     //    //2nd - extract username and expirationDate from token - //before that, extract claim
     public <T> T extractClaims(String token, Function<Claims, T> claimResolver) {
 
@@ -59,6 +70,9 @@ public class JwtUtils {
     }
 
     public Function<String, String> extractUsername = (token) -> extractClaims(token, Claims::getSubject);
+
+
+
     public Function<String, Date> extractExpirationTime = (token) -> extractClaims(token, Claims::getExpiration);
     //    //3rd -  check if token isValid and isExpired
 //

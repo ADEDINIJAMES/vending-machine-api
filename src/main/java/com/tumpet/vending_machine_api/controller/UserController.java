@@ -1,15 +1,19 @@
 package com.tumpet.vending_machine_api.controller;
 
 import com.tumpet.vending_machine_api.enums.Role;
+import com.tumpet.vending_machine_api.exceptions.UserNotFoundException;
 import com.tumpet.vending_machine_api.model.Users;
 import com.tumpet.vending_machine_api.request.LoginRequest;
 import com.tumpet.vending_machine_api.request.UserRequest;
 import com.tumpet.vending_machine_api.request.UserUpdateRequest;
 import com.tumpet.vending_machine_api.responses.ApiResponse;
+import com.tumpet.vending_machine_api.responses.ResponseApi;
 import com.tumpet.vending_machine_api.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +39,7 @@ public class UserController {
         return  ResponseEntity.status(response.getStatus()).body(response);
     }
     @PatchMapping("/update/{id}")
-    public ResponseEntity<ApiResponse<Object>> updateUser (@Valid @RequestBody UserUpdateRequest request, @PathVariable UUID id){
+    public ResponseEntity<ApiResponse<Object>> updateUser (@Valid @RequestBody UserUpdateRequest request, @PathVariable UUID id) throws UserNotFoundException {
     ApiResponse<Object> response = authService.updateUser(request, id);
     return ResponseEntity.status(response.getStatus()).body(response);
 }
@@ -76,5 +80,19 @@ public class UserController {
     public ResponseEntity<ApiResponse<Object>> resetDeposit (@AuthenticationPrincipal Users users) {
         ApiResponse<Object> response = authService.resetBalance(users);
         return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PostMapping("/balance-reset/{id}")
+    public ResponseApi<String> resetBalance (@AuthenticationPrincipal Users users, @RequestParam (name = "amount") int amount , @PathVariable UUID id
+                                                             ) {
+        try {
+            String response = authService.resetBalances(users, amount, id);
+            return ResponseApi.of(HttpStatus.CREATED, response);
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return ResponseApi.of(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+
+        }
     }
 }
